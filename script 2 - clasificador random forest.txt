@@ -1,0 +1,139 @@
+var anio = 2014;
+
+var region = ee.FeatureCollection("projects/mvr-bolivia/assets/Regiones_Clasificacion_Bol_wgs84_Corregido_buff_1km");
+var regionID = 21001;
+var regionF = region.filter(ee.Filter.eq('id_regionC', regionID));
+
+var rutasMosaicos = [
+  "projects/ee-marco711/assets/MOSAICOS_MR/Resultados_Mes_1_" + anio,
+  "projects/ee-marco711/assets/MOSAICOS_MR/Resultados_Mes_2_" + anio,
+  "projects/ee-marco711/assets/MOSAICOS_MR/Resultados_Mes_3_" + anio,
+  "projects/ee-marco711/assets/MOSAICOS_MR/Resultados_Mes_4_" + anio,
+  "projects/ee-rafaelmarco711-2/assets/MOSAICOS_MR/Resultados_Mes_5_" + anio,
+  "projects/ee-rafaelmarco711-2/assets/MOSAICOS_MR/Resultados_Mes_6_" + anio,
+  "projects/ee-rafaelmarco711-5/assets/MOSAICOS_MR/Resultados_Mes_7_" + anio,
+  "projects/ee-rafaelmarco711-4/assets/MOSAICOS_MR/Resultados_Mes_8_" + anio,
+  "projects/ee-rafaelmarco711-3/assets/MOSAICOS_MR/Resultados_Mes_9_" + anio,
+  "projects/ee-rafaelmarco711-3/assets/MOSAICOS_MR/Resultados_Mes_10_" + anio,
+  "projects/ee-rafaelmarco711-4/assets/MOSAICOS_MR/Resultados_Mes_11_" + anio,
+  "projects/ee-rafaelmarco711-3/assets/MOSAICOS_MR/Resultados_Mes_12_" + anio
+];
+
+var coleccion = ee.ImageCollection.fromImages(
+  rutasMosaicos.map(function(path, index) {
+    return ee.Image(path).set('mes', index + 1);
+  })
+);
+
+print("Colección de imágenes:", coleccion);
+
+var startMes = 6;
+var endMes = 12;
+var filteredCollection = coleccion.filter(ee.Filter.gte('mes', startMes))
+                                   .filter(ee.Filter.lte('mes', endMes));
+
+var medianImage = filteredCollection.reduce(ee.Reducer.median()).clip(regionF);
+
+print("Mediana de las bandas:", medianImage);
+
+Map.addLayer(medianImage, {bands: ['swir2_median_median', 'nir_median_median', 'red_median_median'], min: 0, max: 1}, 'Mediana');
+
+var trainingAllMonths = ee.FeatureCollection([]);
+
+var generatePoints = function(polygons, nPoints) {
+  var mosaicMasked = medianImage.updateMask(medianImage.mask());
+  
+  if (mosaicMasked.bandNames().contains('blue_median')) {
+    var points = ee.FeatureCollection.randomPoints(polygons, nPoints);
+    var classValue = polygons.first().get('clase');
+    
+    points = points.map(function(point) {
+      return point.set('clase', classValue);
+    });
+
+    return points;
+  } else {
+    return ee.FeatureCollection([]);
+  }
+};
+
+var soyaPoints = generatePoints(soya, 1000);
+var sorgoPoints = generatePoints(sorgo, 1000);
+var canhaPoints = generatePoints(canha, 1000);
+var maizPoints = generatePoints(maiz, 1000);
+var trigoPoints = generatePoints(trigo, 1000);
+var arrozPoints = generatePoints(arroz, 1000);
+var girasolPoints = generatePoints(arroz, 1000);
+var papaPoints = generatePoints(papa, 1000);
+var no_cultivoPoints = generatePoints(no_cultivo, 2000);
+
+trainingAllMonths = trainingAllMonths
+  .merge(soyaPoints)
+  .merge(sorgoPoints)
+  .merge(canhaPoints)
+  .merge(maizPoints)
+  .merge(trigoPoints)
+  .merge(arrozPoints)
+  .merge(girasolPoints)
+  .merge(papaPoints)
+  .merge(no_cultivoPoints);
+
+var trainedSamples = medianImage.reduceRegions({
+  'collection': trainingAllMonths,
+  'reducer': ee.Reducer.first(),
+  'scale': 30,
+  'tileScale': 16
+});
+
+trainedSamples = trainedSamples.filter(ee.Filter.notNull(['blue_median_median']));
+
+var classifier = ee.Classifier.smileRandomForest({
+  'numberOfTrees': 100
+});
+
+classifier = classifier.train({
+  'features': trainedSamples,
+  'classProperty': 'clase',
+  'inputProperties': [
+    "blue_median_median", "red_median_median", "green_median_median", "nir_median_median", "swir1_median_median", "swir2_median_median", 
+    "cai_median_median", "evi2_median_median", "gcvi_median_median", "hallcover_median_median", "ndvi_median_median", "ndwi_median_median", 
+    "pri_median_median", "savi_median_median", "blue_min_median", "red_min_median", "green_min_median", "nir_min_median", "swir1_min_median",
+    "swir2_min_median", "cai_min_median", "evi2_min_median", "gcvi_min_median", "hallcover_min_median", "ndvi_min_median", "ndwi_min_median",
+    "pri_min_median", "savi_min_median", "blue_max_median", "red_max_median", "green_max_median", "nir_max_median", "swir1_max_median", "swir2_max_median",
+    "cai_max_median", "evi2_max_median", "gcvi_max_median", "hallcover_max_median", "ndvi_max_median", "ndwi_max_median", "pri_max_median", "savi_max_median",
+  ]
+});
+
+var classification = medianImage.classify(classifier).clip(regionF);
+
+var style = {
+  '1': { color: '#1B7837' },  
+  '2': { color: '#D73027' },  
+  '3': { color: '#91CF60' },  
+  '4': { color: '#313695' },  
+  '5': { color: '#4575B4' },  
+  '6': { color: '#FDAE61' },  
+  '7': { color: '#FFDA00' },  
+  '8': { color: '#ABDDA4' },  
+  '9': { color: '#636363' }   
+};
+
+Map.addLayer(soyaPoints, style['1'], 'Puntos de Muestreo - Soya', false);
+Map.addLayer(sorgoPoints, style['2'], 'Puntos de Muestreo - Sorgo', false);
+Map.addLayer(canhaPoints, style['3'], 'Puntos de Muestreo - Caña de Azúcar', false);
+Map.addLayer(maizPoints, style['4'], 'Puntos de Muestreo - Maíz', false);
+Map.addLayer(trigoPoints, style['5'], 'Puntos de Muestreo - Trigo', false);
+Map.addLayer(arrozPoints, style['6'], 'Puntos de Muestreo - Arroz', false);
+Map.addLayer(girasolPoints, style['7'], 'Puntos de Muestreo - Girasol', false);
+Map.addLayer(papaPoints, style['8'], 'Puntos de Muestreo - Papa', false);
+Map.addLayer(no_cultivoPoints, style['9'], 'Puntos de Muestreo - No Cultivo', false);
+
+Map.addLayer(classification, {
+  'min': 1,
+  'max': 9,
+  'palette': ["#1f9152", "#f4fd6b", "#fddbbf", "#2540ff", "#ff0000", "#857746", "#ffaa00", "#aa55aa", "#dddddd"],
+  'opacity': 1
+}, 'Clasificación');
+
+Map.addLayer(table, {color: 'FF0000', pointSize: 3, fillColor: '0000FF'}, 'puntos cultivo');
+
