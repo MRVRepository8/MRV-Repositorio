@@ -1,0 +1,81 @@
+var anio = 2018;
+
+// Importa la colección de imágenes
+var regionD = ee.FeatureCollection("projects/ee-mriosgis511-2/assets/Grilla_cultivo");
+var cuadranteID1 = 11; // cuadrante1
+var cuadranteID2 = 18; // cuadrante2
+var cuadranteID3 = 19; // cuadrante3
+
+var cuadranteF1 = regionD.filter(ee.Filter.eq('ORIG_FID', cuadranteID1));
+var cuadranteF2 = regionD.filter(ee.Filter.eq('ORIG_FID', cuadranteID2));
+var cuadranteF3 = regionD.filter(ee.Filter.eq('ORIG_FID', cuadranteID3));
+
+var poligonoUnion = cuadranteF1.merge(cuadranteF2).merge(cuadranteF3);
+var regionD = ee.FeatureCollection("projects/ee-mriosgis511-2/assets/Grilla_cultivo");
+
+var rutasMosaicos = [
+  "projects/ee-marcoriosruiz12/assets/MOSAICOS_MR/S2Resultados_Mes_1_" + anio,
+  "projects/ee-mriosgis511-2/assets/MOSAICOS_MR/S2Resultados_Mes_2_" + anio,
+  "projects/ee-mriosgis511-3/assets/MOSAICOS_MR/S2Resultados_Mes_3_" + anio,
+  "projects/ee-marcoriosruiz13/assets/MOSAICOS_MR/S2Resultados_Mes_4_" + anio,
+  "projects/ee-marcoriosruiz14/assets/MOSAICOS_MR/S2Resultados_Mes_5_" + anio,
+  "projects/ee-mriosgis511-4/assets/MOSAICOS_MR/S2Resultados_Mes_6_" + anio,
+  "projects/ee-rafaelmarco711-6/assets/MOSAICOS_MR/S2Resultados_Mes_7_" + anio,
+  "projects/ee-rafaelmarco711-7/assets/MOSAICOS_MR/S2Resultados_Mes_8_" + anio,
+  "projects/ee-rafaelmarco711-8/assets/MOSAICOS_MR/S2Resultados_Mes_9_" + anio,
+  "projects/ee-rafaelmarco711-9/assets/MOSAICOS_MR/S2Resultados_Mes_10_" + anio,
+  "projects/ee-rafaelmarco711-10/assets/MOSAICOS_MR/S2Resultados_Mes_11_" + anio,
+  "projects/ee-rafaelmarco711-11/assets/MOSAICOS_MR/S2Resultados_Mes_12_" + anio
+];
+
+var coleccion = ee.ImageCollection.fromImages(
+  rutasMosaicos.map(function(path, index) {
+    return ee.Image(path).set('mes', index + 1);
+  })
+);
+
+// Seleccionar el rango de meses que deseas incluir (por ejemplo, del 6 al 11)
+var startMes = 4;
+var endMes = 9;
+var filteredCollection = coleccion.filter(ee.Filter.gte('mes', startMes))
+                                   .filter(ee.Filter.lte('mes', endMes));
+
+
+
+var medianImage = filteredCollection.reduce(ee.Reducer.median()).clip(poligonoUnion);
+
+//SOYA GLAD
+var soya_ver = ee.Image('projects/glad/soy_annual_SA/'+anio)
+var soya_map = ee.Image(soya_ver).clip(poligonoUnion);
+
+var clasif_cult_mr = ee.Image("projects/ee-marcoriosruiz7/assets/Masked_Combined_Binary_Map").clip(poligonoUnion);
+var clasif_rene = ee.Image("users/renecrzprd/classification-2018_crop_1").clip(poligonoUnion);
+var PuntosCampo = ee.FeatureCollection("users/mriosgis511/muestras_cultivos");
+// Selecciona la primera imagen de la colección (puedes ajustar esto según tus necesidades)
+//var imagen = clasif_rene.first();
+
+// Selecciona la banda de clasificación
+var banda_clasificacion = clasif_rene.select('classification');
+
+// Define los colores que quieres asignar a cada clase
+var colores = ['6d12d6', 'ff31a6','d68c0d', '19ffb2','ffffff'];
+
+Map.addLayer(medianImage, {bands: ['swir2_median_median', 'nir_median_median', 'red_median_median'], min: 0, max: 1}, 'Mediana');
+Map.addLayer(clasif_cult_mr, {palette:['red']}, 'cultivos globales', false);
+Map.addLayer(soya_map, {palette:['yellow']}, 'soya-'+anio, false);
+
+
+// Agrega la capa al mapa con la banda de clasificación y colores específicos
+Map.addLayer(banda_clasificacion, {min: 1, max: 5, palette: colores}, 'Clasificación 2018');
+
+// Añade el contorno del polígono al mapa sin fondo
+Map.addLayer(cuadranteF1, {color: 'FF0000', fillOpacity: 0}, 'Contorno del cuadrante1',false);
+Map.addLayer(cuadranteF2, {color: 'FF0000', fillOpacity: 0}, 'Contorno del cuadrante2',false);
+Map.addLayer(cuadranteF3, {color: 'FF0000', fillOpacity: 0}, 'Contorno del cuadrante3',false);
+
+Map.addLayer(poligonoUnion, {color: '00FF00'}, 'Unión de polígonos', false);
+Map.addLayer(PuntosCampo, {color: 'FF0000', pointSize: 3, fillColor: '0000FF'}, 'Tabla de puntos', false);
+
+
+// Centra el mapa en la región de interés (puedes ajustar esto según tus necesidades)
+Map.centerObject(cuadranteF1, 6);
