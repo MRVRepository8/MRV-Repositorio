@@ -1,0 +1,274 @@
+//LINK DE EXCEL PARA VISUALIZAR LOS SCRIPTS DE LAS 30 REGIONES PARA CADA AÑO
+//https://docs.google.com/spreadsheets/d/1y6IuZTNzEsuNK1qPQmNtzvioBTUQcLozm4XC1iBsD5c/edit#gid=983714602
+
+//CODIGO BASE EN JAVASCRIPT PARA LA CLASIFICACION DE MOSAICOS EN GOOGLE ENGINE
+
+// con este scrip construimos los mosaicos dobles, solo hace falta meter el id de la region
+var id_region = 20101
+var carpeta = 'mosaicos-quemas-m'
+var carpeta2 = 'mosaicos-quemas2' //export
+var regionR = ee.FeatureCollection("projects/mvr-bolivia/assets/Regiones_Clasificacion_Bol_wgs84_Corregido_buff_1km")
+              .filter(ee.Filter.eq('id_regionC',id_region))
+Map.addLayer(regionR)
+var nov22 = ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_11_2022');
+var dic22 = ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_12_2022');
+var ene =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_01_2023');
+var feb =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_02_2023');
+var mar =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_03_2023');
+var abr =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_04_2023');
+var may =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_05_2023');
+var jun =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_06_2023');
+var jul =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_07_2023');
+var ago =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_08_2023');
+var sep =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_09_2023');
+var oct =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_10_2023');
+var nov =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_11_2023');
+var dic =   ee.Image('projects/'+carpeta+'/assets/'+id_region+'/id_'+id_region+'_12_2023');
+
+// compuestos  bi mensuales for pre-fire
+var dic_22m = ee.ImageCollection([nov22,dic22]).mosaic() //diciembre compuesto 
+var ene_m = ee.ImageCollection([nov22,dic22,ene]).mosaic() //enero compuesto hace q enero este arriba y atras se parchea los meses q faltan
+var feb_m = ee.ImageCollection([dic22,ene,feb]).mosaic() //febrero compuesto 
+var mar_m = ee.ImageCollection([ene,feb,mar]).mosaic() //marzo compuesto
+var abr_m = ee.ImageCollection([feb,mar,abr]).mosaic() //abril compuesto
+var may_m = ee.ImageCollection([mar,abr,may]).mosaic() //mayo compuesto
+var jun_m = ee.ImageCollection([abr,may,jun]).mosaic() //junio compuesto
+var jul_m = ee.ImageCollection([may,jun,jul]).mosaic() //julio compuesto
+var ago_m = ee.ImageCollection([jun,jul,ago]).mosaic() //agosto compuesto
+var sep_m = ee.ImageCollection([jul,ago,sep]).mosaic() //septiembre compuesto
+var oct_m = ee.ImageCollection([ago,sep,oct]).mosaic() //octubre compuesto
+var nov_m = ee.ImageCollection([sep,oct,nov]).mosaic() //noviembre compuesto
+var dic_m = ee.ImageCollection([oct,nov,dic]).mosaic() //diciembre compuesto
+
+Map.addLayer(nov22, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'noviembre 22', false);
+
+Map.addLayer(dic22, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'diciembre 22', false);
+Map.addLayer(ene, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'enero', false);
+Map.addLayer(feb, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'febrero', false);
+Map.addLayer(mar, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'marzo', false);
+Map.addLayer(abr, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'abril', false);
+Map.addLayer(may, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'mayo', false);
+Map.addLayer(jun, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'junio', false);
+Map.addLayer(jul, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'julio', false);
+Map.addLayer(ago, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'agosto', false);
+Map.addLayer(sep, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'septiembre', false);
+Map.addLayer(oct, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'octubre', false);
+Map.addLayer(nov, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'noviembre', false);
+Map.addLayer(dic, {bands: ['B12', 'B8', 'B4'], min: [0, 1000, 0], max: [3000, 4000, 3000]}, 'diciembre', false);
+
+// tus haave delta bands
+var t1 = ene.subtract(dic_22m).int16()
+var t2 = feb.subtract(ene_m).int16()
+var t3 = mar.subtract(feb_m).int16()
+var t4 = abr.subtract(mar_m).int16()
+var t5 = may.subtract(abr_m).int16()
+var t6 = jun.subtract(may_m).int16()
+var t7 = jul.subtract(jun_m).int16()
+var t8 = ago.subtract(jul_m).int16()
+var t9 = sep.subtract(ago_m).int16()
+var t10 = oct.subtract(sep_m).int16()
+var t11 = nov.subtract(oct_m).int16()
+var t12 = dic.subtract(nov_m).int16()
+
+
+// Get new index with two times
+
+var NBR_t1_1 = dic_22m.select('NBR').multiply(-1)
+var NBR_t1_2 = ene_m.select('NBR').multiply(-1)
+var NBR_t1_3 = feb_m.select('NBR').multiply(-1)
+var NBR_t1_4 = mar_m.select('NBR').multiply(-1)
+var NBR_t1_5 = abr_m.select('NBR').multiply(-1)
+var NBR_t1_6 = may_m.select('NBR').multiply(-1)
+var NBR_t1_7 = jun_m.select('NBR').multiply(-1)
+var NBR_t1_8 = jul_m.select('NBR').multiply(-1)
+var NBR_t1_9 = ago_m.select('NBR').multiply(-1)
+var NBR_t1_10 = sep_m.select('NBR').multiply(-1)
+var NBR_t1_11 = oct_m.select('NBR').multiply(-1)
+var NBR_t1_12 = nov_m.select('NBR').multiply(-1)
+//print(NBR_t1_10,'A')
+
+var NBR_t2_1 = ene.select('NBR').multiply(-1)
+var NBR_t2_2 = feb.select('NBR').multiply(-1)
+var NBR_t2_3 = mar.select('NBR').multiply(-1)
+var NBR_t2_4 = abr.select('NBR').multiply(-1)
+var NBR_t2_5 = may.select('NBR').multiply(-1)
+var NBR_t2_6 = jun.select('NBR').multiply(-1)
+var NBR_t2_7 = jul.select('NBR').multiply(-1)
+var NBR_t2_8 = ago.select('NBR').multiply(-1)
+var NBR_t2_9 = sep.select('NBR').multiply(-1)
+var NBR_t2_10 = oct.select('NBR').multiply(-1)
+var NBR_t2_11 = nov.select('NBR').multiply(-1)
+var NBR_t2_12 = dic.select('NBR').multiply(-1)
+
+
+//Cálculo Relative RdNBR Jay D. Miller
+var AbsNBRPre_1 = NBR_t1_1.abs();
+var RdNBR_1 = NBR_t1_1.subtract(NBR_t2_1)
+              .divide(AbsNBRPre_1.sqrt());
+              
+var AbsNBRPre_2 = NBR_t1_2.abs();
+var RdNBR_2 = NBR_t1_2.subtract(NBR_t2_2)
+              .divide(AbsNBRPre_2.sqrt());
+              
+var AbsNBRPre_3 = NBR_t1_3.abs();
+var RdNBR_3 = NBR_t1_3.subtract(NBR_t2_3)
+              .divide(AbsNBRPre_3.sqrt());
+var AbsNBRPre_4 = NBR_t1_4.abs();
+var RdNBR_4 = NBR_t1_4.subtract(NBR_t2_4)
+              .divide(AbsNBRPre_4.sqrt());
+var AbsNBRPre_5 = NBR_t1_5.abs();
+var RdNBR_5 = NBR_t1_5.subtract(NBR_t2_5)
+              .divide(AbsNBRPre_5.sqrt());
+var AbsNBRPre_6 = NBR_t1_6.abs();
+var RdNBR_6 = NBR_t1_6.subtract(NBR_t2_6)
+              .divide(AbsNBRPre_6.sqrt());
+var AbsNBRPre_7 = NBR_t1_7.abs();
+var RdNBR_7 = NBR_t1_7.subtract(NBR_t2_7)
+              .divide(AbsNBRPre_7.sqrt());
+var AbsNBRPre_8 = NBR_t1_8.abs();
+var RdNBR_8 = NBR_t1_8.subtract(NBR_t2_8)
+              .divide(AbsNBRPre_8.sqrt());
+var AbsNBRPre_9 = NBR_t1_9.abs();
+var RdNBR_9 = NBR_t1_9.subtract(NBR_t2_9)
+              .divide(AbsNBRPre_9.sqrt());
+var AbsNBRPre_10 = NBR_t1_10.abs();
+var RdNBR_10 = NBR_t1_10.subtract(NBR_t2_10)
+              .divide(AbsNBRPre_10.sqrt());
+var AbsNBRPre_11 = NBR_t1_11.abs();
+var RdNBR_11 = NBR_t1_11.subtract(NBR_t2_11)
+              .divide(AbsNBRPre_11.sqrt());
+var AbsNBRPre_12 = NBR_t1_12.abs();
+var RdNBR_12 = NBR_t1_12.subtract(NBR_t2_12)
+              .divide(AbsNBRPre_12.sqrt());
+
+
+var t1z =t1.addBands(RdNBR_1.rename('RdNBR')).int16()
+var t1x =t1.addBands(RdNBR_1.rename('RdNBR')).int16()
+Map.addLayer(t1z)
+var t1 =t1.addBands(RdNBR_1.rename('RdNBR')).int16()
+var t2 =t2.addBands(RdNBR_2.rename('RdNBR')).int16()
+var t3 =t3.addBands(RdNBR_3.rename('RdNBR')).int16()
+var t4 =t4.addBands(RdNBR_4.rename('RdNBR')).int16()
+var t5 =t5.addBands(RdNBR_5.rename('RdNBR')).int16()
+var t6 =t6.addBands(RdNBR_6.rename('RdNBR')).int16()
+var t7 =t7.addBands(RdNBR_7.rename('RdNBR')).int16()
+var t8 =t8.addBands(RdNBR_8.rename('RdNBR')).int16()
+var t9 =t9.addBands(RdNBR_9.rename('RdNBR')).int16()
+var t10 =t10.addBands(RdNBR_10.rename('RdNBR')).int16()
+var t11 =t11.addBands(RdNBR_11.rename('RdNBR')).int16() 
+var t12 =t12.addBands(RdNBR_12.rename('RdNBR')) .int16()
+
+//Map.addLayer(t1x)
+
+Export.image.toAsset({
+    image: t1,
+    region: regionR,
+    description: 'Img_'+id_region+'t1',
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t1',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+
+Export.image.toAsset({
+    image: t2,
+    region: regionR,
+    description: 'Img_' +id_region+'t2',
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t2',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t3,
+    region: regionR,
+    description: 'Img_' +id_region +'t3' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t3',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t4,
+    region: regionR,
+    description: 'Img_' +id_region +'t4' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t4',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t5,
+    region: regionR,
+    description: 'Img_'+id_region +'t5' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t5',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t6,
+    region: regionR,
+    description: 'Img_' +id_region +'t6' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t6',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t7,
+    region: regionR,
+    description: 'Img_' +id_region +'t7' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t7',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t8,
+    region: regionR,
+    description: 'Img_' +id_region +'t8' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t8',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t9,
+    region: regionR,
+    description: 'Img_' +id_region +'t9' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t9',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+
+Export.image.toAsset({
+    image: t10,
+    region: regionR,
+    description: 'Img_' +id_region +'t10' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t10',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t11,
+    region:regionR,
+    description: 'Img_' +id_region +'t11' ,
+    assetId:    'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t11',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+Export.image.toAsset({
+    image: t12,
+    region: regionR,
+    description: 'Img_' +id_region +'t12' ,
+    assetId: 'projects/'+carpeta2+'/assets/'+id_region+'_2'+'/region_' + id_region+'_t12',
+    crs: 'EPSG:4326',
+    maxPixels: "9030040147504",
+    scale: 20
+})
+
+print(t1)
