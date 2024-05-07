@@ -4,7 +4,7 @@
 //CODIGO BASE EN JAVASCRIPT PARA LA CLASIFICACION DE MOSAICOS EN GOOGLE ENGINE
 
 // con este scrip construimos los mosaicos dobles, solo hace falta meter el id de la region
-var id_region = 20401
+var id_region = 20502
 var carpeta = 'mosaicos-quemas-m'
 var carpeta2 = 'mosaicos-quemas2' //export
 var regionR = ee.FeatureCollection("projects/mvr-bolivia/assets/Regiones_Clasificacion_Bol_wgs84_Corregido_buff_1km")
